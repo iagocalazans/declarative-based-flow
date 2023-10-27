@@ -1,4 +1,4 @@
-import { flow } from './'
+import { ACTIONS, flow } from './'
 
 type EmptyPayload = {
     payload: {}
@@ -26,7 +26,7 @@ describe('given a flow is called with a payload and it splits', () => {
         })
         .split(
             { 
-                action: 'type_check', 
+                action: ACTIONS.TYPE_CHECK, 
                 property: 'value', 
                 matcher: 'string' 
             }, 
@@ -51,7 +51,7 @@ describe('given a flow is called with a payload and it splits', () => {
         })
         .split(
             { 
-                action: 'type_check', 
+                action: ACTIONS.TYPE_CHECK, 
                 property: 'value', 
                 matcher: 'number' 
             }, 

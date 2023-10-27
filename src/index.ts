@@ -4,10 +4,14 @@ export type Payload = {
     }
 }
 
+export enum ACTIONS {
+    TYPE_CHECK = 'type_check'
+}
+
 type TypeOf = "undefined" | "object" | "boolean" | "number" | "bigint" | "string" | "symbol" | "function"
 
 export type VisitorTypeCheck = {
-    action: 'type_check', 
+    action: ACTIONS, 
     property: keyof Payload['payload'], 
     matcher: TypeOf
 }
@@ -32,7 +36,7 @@ export class Flow<T, V extends Partial<T> = T> implements Command<V> {
         const {success, failed} = flow;
 
         switch(conditional.action) {
-            case 'type_check': 
+            case ACTIONS.TYPE_CHECK: 
                 typeof this.request.payload[conditional.property] === conditional.matcher ? success(this) : failed(this)
                 
                 return this
