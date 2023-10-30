@@ -12,7 +12,10 @@
     "flow"
   ],
   "contributors": [
-    "Rafael Iunes <rafaeliunes97@gmail.com>"
+    {
+      "email": "rafaeliunes97@gmail.com",
+      "name": "Rafael Iunes"
+    }
   ],
   "repository": {
     "type": "git",
