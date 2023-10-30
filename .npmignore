@@ -1,0 +1,6 @@
+.vscode/
+.github/
+jest.config.js
+.eslintrc.js
+.gitignore
+tests/

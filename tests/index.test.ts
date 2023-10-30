@@ -1,4 +1,4 @@
-import { flow } from './'
+import { flow } from '../src'
 
 type EmptyPayload = {
     payload: {}
