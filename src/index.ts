@@ -1,58 +1,41 @@
-export type Payload = {
+import { SetVariableCommand } from "./set-variable-command";
+import { SplitCommand, ACTIONS_CONDITIONS } from "./split-command";
+
+export type Request = {
     payload: {
         [key: string]: any;
     }
 }
 
-export enum ACTIONS {
-    TYPE_CHECK = 'type_check'
+export const flow =  <T extends Request, V extends Partial<T> = T>(content: T) => {
+    return new Flow<T, V>(content);
 }
 
-type TypeOf = "undefined" | "object" | "boolean" | "number" | "bigint" | "string" | "symbol" | "function"
+export class Flow<T, V extends Partial<T> = T> {
+    private splitCommand: SplitCommand<T, V>
+    private setVariableCommand: SetVariableCommand<T, V>
 
-export type VisitorTypeCheck = {
-    action: ACTIONS, 
-    property: keyof Payload['payload'], 
-    matcher: TypeOf
-}
-
-export const flow =  <T extends Payload, V extends Partial<T> = T>(content: T) => {
-    return new Flow<T, V>(content)
-}
-
-export interface Command<T> {
-    execute(): Promise<T>;
-}
-
-export class Flow<T, V extends Partial<T> = T> implements Command<V> {
-    constructor(private request: Payload) {
-
+    constructor(private _req: Request) {
+        this.splitCommand = new SplitCommand(this);
+        this.setVariableCommand = new SetVariableCommand(this);
     }
 
-    split(conditional: VisitorTypeCheck, flow: {
+    get request() {
+        return this._req;
+    }
+
+    split(conditional: ACTIONS_CONDITIONS, flow: {
         success: (flow: Flow<T, V>) => Flow<T, V>,
         failed: (flow: Flow<T, V>) => Flow<T, V>
     }) {
-        const {success, failed} = flow;
-
-        switch(conditional.action) {
-            case ACTIONS.TYPE_CHECK: 
-                typeof this.request.payload[conditional.property] === conditional.matcher ? success(this) : failed(this)
-                
-                return this
-        }
+        return this.splitCommand.mount(conditional, flow);
     }
 
     setVariable(name: string, value: unknown) {
-        Reflect.defineProperty(this.request.payload, name, {
-            enumerable: true,
-            value
-        })
-
-        return this;
+        return this.setVariableCommand.mount(name, value);
     }
 
-    async execute(): Promise<V> {
-        return this.request.payload as V
+    async run(): Promise<V> {
+        return this._req.payload as V;
     }
 }
