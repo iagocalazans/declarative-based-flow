@@ -1,6 +1,6 @@
 {
   "name": "declarative-based-flow",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A powerful and intuitive package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax.",
   "scripts": {
     "test:dev": "jest --watch",
