@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "A powerful and intuitive package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax.",
   "scripts": {
-    "test:dev": "jest --watch"
+    "test:dev": "jest --watch",
+    "build": "tsc"
   },
   "main": "lib/index.js",
   "author": "Iago Calazans <iago.calazans@gmail.com>",

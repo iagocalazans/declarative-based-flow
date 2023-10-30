@@ -4,3 +4,5 @@ jest.config.js
 .eslintrc.js
 .gitignore
 tests/
+src/
+tsconfig.json
