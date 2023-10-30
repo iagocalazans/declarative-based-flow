@@ -1,5 +1,4 @@
-import { Flow, flow } from "../src";
-import { ACTIONS } from "../src/split-command";
+import { flow, Flow, ACTIONS } from "../src";
 
 
 type NumberStringValuePayload = {

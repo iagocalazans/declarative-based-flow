@@ -1,4 +1,4 @@
-import { Flow } from ".";
+import { Flow } from "./flow";
 import { Command } from "./command.interface";
 
 
