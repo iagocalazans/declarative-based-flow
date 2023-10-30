@@ -66,7 +66,8 @@ describe('given a flow is called with an empty payload and call external functio
                 method: 'GET', 
                 url: 'http://localhost:3000'
             }, {
-                response: (next, data: SampleResponseType) => next.setVariable('user', data.userId), 
+                response: (next, data: SampleResponseType) => 
+                    next.setVariable('user', data.userId), 
                 error: (next) => next 
             })
         .run();

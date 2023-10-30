@@ -11,6 +11,16 @@
     "declarative",
     "flow"
   ],
+  "contributors": [
+    "Rafael Iunes <rafaeliunes97@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:iagocalazans/declarative-based-flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iagocalazans/declarative-based-flow/issues"
+  },
   "author": "Iago Calazans <iago.calazans@gmail.com>",
   "license": "MIT",
   "devDependencies": {
@@ -21,5 +31,8 @@
   },
   "dependencies": {
     "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=16"
   }
 }

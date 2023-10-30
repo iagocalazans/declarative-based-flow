@@ -26,9 +26,27 @@ yarn add declarative-based-flow
 
 ## USAGE
 
+#### Just call `flow` to begin
+
 ```ts
  import { flow, ACTIONS } from 'declarative-based-flow';
 
+ const data = flow({ 
+        payload: { 
+            value: '1022' 
+        } 
+    })
+```
+
+#### and when finished, just `run` it
+
+```ts
+ await data.run();
+```
+
+#### A complete execution should looks like
+
+```ts
  const data = flow({ 
         payload: { 
             value: '1022' 
@@ -51,6 +69,50 @@ yarn add declarative-based-flow
     .run();
 
  console.log(data); // { payload: { value: '1022' }, variables: { path: 'failed', fromPayload: '1022' } }
+```
+
+#### The more you combine methods, more you flow
+
+```ts
+ data.functionCall({
+        name: 'widgetCall', 
+        method: 'GET', 
+        url: 'http://localhost:3000'
+    }, {
+        response: (next, data: SampleResponseType) => next
+            .split(
+                { 
+                    property: 'value', // => payload.value
+                    action: ACTIONS.GREATER_THAN, 
+                    matcher: 1_023 
+                }, 
+                {
+                    success: (next) => next
+                        .setVariable('path', 'success')
+                        .setVariable('userId', data.userId), 
+                    failed: (next) => next
+                        .setVariable('path', 'failed')
+                }
+            ), 
+        error: (next) => next 
+    })
+    .run();
+
+ console.log(data); 
+    // { 
+    //     payload: { 
+    //         value: '1024' 
+    //     }, 
+    //     variables: { 
+    //         path: 'success', 
+    //         userId: 'user.name' 
+    //     }, 
+    //     functions: { 
+    //         widgetCall: { 
+    //             userId: 'user.name' 
+    //         } 
+    //     } 
+    // }
 ```
 
 ### Why Use Declarative-Based Flow
