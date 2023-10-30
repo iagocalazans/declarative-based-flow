@@ -27,24 +27,30 @@ yarn add declarative-based-flow
 ## USAGE
 
 ```ts
- import { flow } from 'declarative-based-flow';
+ import { flow, ACTIONS } from 'declarative-based-flow';
+
  const data = flow({ 
-            payload: { 
-                value: '1022' 
-            } 
-        })
-        .split(
-            { 
-                property: 'value', // => payload.value
-                action: ACTIONS.GREATER_THAN, 
-                matcher: 1_023 
-            }, 
-            {
-                success: (next) => next.setVariable('path', 'success'), 
-                failed: (next) => next.setVariable('path', 'failed')
-            }
-        )
-        .run();
+        payload: { 
+            value: '1022' 
+        } 
+    })
+    .split(
+        { 
+            property: 'value', // => payload.value
+            action: ACTIONS.GREATER_THAN, 
+            matcher: 1_023 
+        }, 
+        {
+            success: (next) => next
+                .setVariable('path', 'success')
+                .setVariable('fromPayload', next.payload.value), 
+            failed: (next) => next
+                .setVariable('path', 'failed')
+        }
+    )
+    .run();
+
+ console.log(data); // { payload: { value: '1022' }, variables: { path: 'failed', fromPayload: '1022' } }
 ```
 
 ### Why Use Declarative-Based Flow

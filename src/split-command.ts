@@ -1,6 +1,6 @@
-import { Request } from "."
 import { Command } from "./command.interface"
 import { Flow } from "./flow"
+import { Request } from "./index"
 
 export enum ACTIONS {
     TYPE_CHECK = 'type_check',

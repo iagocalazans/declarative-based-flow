@@ -6,11 +6,8 @@ type NumberStringValuePayload = {
 }
 
 const destination = {
-    success: (next: Flow<NumberStringValuePayload, NumberStringValuePayload>) => next
-        .setVariable('path', 'success'), 
-    
-    failed: (next: Flow<NumberStringValuePayload, NumberStringValuePayload>) => next
-        .setVariable('path', 'failed')
+    success: (next: Flow<NumberStringValuePayload, NumberStringValuePayload>) => next.setVariable('path', 'success'), 
+    failed: (next: Flow<NumberStringValuePayload, NumberStringValuePayload>) => next.setVariable('path', 'failed')
 }
 
 describe('given a flow is called with a payload and it splits', () => {
@@ -30,7 +27,13 @@ describe('given a flow is called with a payload and it splits', () => {
         )
         .run();
         
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({
+            payload: { 
+                value: '1124' 
+            }, variables: { 
+                path: 'success' 
+            }
+        });
     })
 
     it('didnt match "number" and split to failed', async () => {
@@ -49,7 +52,14 @@ describe('given a flow is called with a payload and it splits', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1124' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
     
 })
@@ -71,7 +81,14 @@ describe('ACTION.GREATER_THAN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1124' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as 1022 isnt grt 1_023', async () => {
@@ -90,7 +107,14 @@ describe('ACTION.GREATER_THAN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1022' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -111,7 +135,14 @@ describe('ACTION.GREATER_THAN_OR_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1023' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as 1022 isnt grt or equal 1_023', async () => {
@@ -130,7 +161,14 @@ describe('ACTION.GREATER_THAN_OR_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1022' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -151,7 +189,14 @@ describe('ACTION.LESSER_THAN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '937' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as 1123 isnt grt or equal 1_023', async () => {
@@ -170,7 +215,14 @@ describe('ACTION.LESSER_THAN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1123' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -191,7 +243,14 @@ describe('ACTION.LESSER_THAN_OR_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1023' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as 1123 isnt grt or equal 1_023', async () => {
@@ -210,7 +269,14 @@ describe('ACTION.LESSER_THAN_OR_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1123' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -231,7 +297,14 @@ describe('ACTION.EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: 1_023
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as "1_023" isnt equal 1_023', async () => {
@@ -250,7 +323,14 @@ describe('ACTION.EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -271,7 +351,14 @@ describe('ACTION.NOT_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as "1_023" is equal "1_023"', async () => {
@@ -290,7 +377,14 @@ describe('ACTION.NOT_EQUAL', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -311,7 +405,14 @@ describe('ACTION.IN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as "1_023" isnt in array', async () => {
@@ -330,7 +431,14 @@ describe('ACTION.IN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })
 
@@ -351,7 +459,14 @@ describe('ACTION.NOT_IN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'success' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'success'
+            }
+        });
     })
 
     it('should split to failed as "1_023" is in array', async () => {
@@ -370,6 +485,13 @@ describe('ACTION.NOT_IN', () => {
         )
         .run();
 
-        expect(data).resolves.toMatchObject({ path: 'failed' });
+        expect(data).resolves.toMatchObject({ 
+            payload: { 
+                value: '1_023' 
+            },
+            variables: {
+                path: 'failed'
+            }
+        });
     })
 })

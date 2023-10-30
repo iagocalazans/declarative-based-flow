@@ -10,9 +10,18 @@ export class SetVariableCommand<T, V extends Partial<T> = T> implements Command 
     }
 
     mount(name: string, value: unknown) {
-        Reflect.defineProperty(this._flow.request.payload, name, {
+        if (!Reflect.has(this._flow.request, 'variables')) {
+            Reflect.defineProperty(this._flow.request, 'variables', {
+                enumerable: true,
+                value: {}
+            });
+        }
+
+        //@ts-ignore
+        Reflect.defineProperty(this._flow.request.variables, name, {
             enumerable: true,
-            value
+            writable: false,
+            value,
         });
 
         return this._flow;

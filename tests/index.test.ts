@@ -1,4 +1,4 @@
-import { flow } from '../src'
+import { flow } from "../src";
 
 type EmptyPayload = {
     payload: {}
@@ -10,8 +10,10 @@ describe('given a flow is called with an empty payload and instantly executed', 
             payload: {} 
         })
         .run();
-        
-        expect(data).resolves.toEqual({});
+
+        expect(data).resolves.toMatchObject({
+            payload: {}
+        });
     })
     
     it('should returns an object with prop noName', async () => {
@@ -23,10 +25,13 @@ describe('given a flow is called with an empty payload and instantly executed', 
             .setVariable('noThing', [])
             .run();
         
-        expect(data).resolves.toMatchObject({ 
-            noName: 1,
-            noData: 'teste-data',
-            noThing: []
+        expect(data).resolves.toMatchObject({
+            payload: {},
+            variables: { 
+                noName: 1,
+                noData: 'teste-data',
+                noThing: []
+            }
         });
     })
-})
+}) 

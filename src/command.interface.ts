@@ -1,4 +1,4 @@
-import { Flow } from "./flow";
+import { Flow } from "./";
 
 export interface Command {
     mount(...args: any[]): Flow<any>;
