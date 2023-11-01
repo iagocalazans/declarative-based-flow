@@ -1,5 +1,7 @@
 # Declarative Based Flow (declarative-based-flow)
 
+[![Node.js Jest](https://github.com/iagocalazans/declarative-based-flow/actions/workflows/node.js.yml/badge.svg?branch=master)](https://github.com/iagocalazans/declarative-based-flow/actions/workflows/node.js.yml)
+
 Declarative-Based Flow is a powerful and intuitive npm package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax. This package provides a seamless way to define, orchestrate, and execute a series of operations or commands with ease.
 
 __Key Features:__
