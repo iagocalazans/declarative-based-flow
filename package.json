@@ -4,6 +4,7 @@
   "description": "A powerful and intuitive package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax.",
   "scripts": {
     "test:dev": "jest --watch",
+    "test:coverage": "jest --verbose --collectCoverage",
     "build": "rm -Rf lib && tsc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
