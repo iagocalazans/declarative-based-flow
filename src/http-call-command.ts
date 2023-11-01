@@ -1,6 +1,6 @@
-import { Flow } from "./flow";
-import { Command } from "./command.interface";
 import axios from "axios";
+import { Command } from "./command.interface";
+import { Flow } from "./flow";
 
 export class HttpCallCommand<T, V extends Partial<T> = T> implements Command {
   private _flow: Flow<T, V>;
@@ -9,7 +9,7 @@ export class HttpCallCommand<T, V extends Partial<T> = T> implements Command {
     this._flow = flow;
   }
 
-  mount(
+  mount<U>(
     {
       name,
       method,
@@ -20,9 +20,9 @@ export class HttpCallCommand<T, V extends Partial<T> = T> implements Command {
       url: string;
     },
     next: {
-      response: (flow: Flow<T, V>, data?: any) => Flow<T, V>;
+      response: (flow: Flow<T, V>, data: U) => Flow<T, V>;
       error: (flow: Flow<T, V>) => Flow<T, V>;
-    }
+    },
   ) {
     if (["get", "post", "put"].indexOf(method.toLowerCase()) === -1) {
       throw "Invalid method, should be one of";
@@ -31,15 +31,15 @@ export class HttpCallCommand<T, V extends Partial<T> = T> implements Command {
     const { response, error } = next;
 
     axios({ method: method, url: url })
-      .then(({ data }) => {
+      .then(({ data }: { data: U }) => {
         if (!Reflect.has(this._flow.request, name)) {
           Reflect.defineProperty(this._flow.request, "http", {
             enumerable: true,
             value: {},
           });
         }
-        //@ts-ignore
-        Reflect.defineProperty(this._flow.request.http, name, {
+
+        Reflect.defineProperty(this._flow.request.http!, name, {
           enumerable: true,
           writable: false,
           value: data,

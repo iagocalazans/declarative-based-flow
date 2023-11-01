@@ -1,5 +1,5 @@
 import { Flow } from "./";
 
 export interface Command {
-    mount(...args: any[]): Flow<any>;
+  mount(...args: unknown[]): Flow<any>;
 }

@@ -1,23 +1,15 @@
 import { Command } from "./command.interface";
-import { HttpCallCommand as HttpCallCommand } from "./http-call-command";
-import { SetVariableCommand } from "./set-variable-command";
-import { SplitCommand, ACTIONS_CONDITIONS } from "./split-command";
 import { FunctionCallCommand } from "./function-call-command";
+import { HttpCallCommand } from "./http-call-command";
+import { SetVariableCommand } from "./set-variable-command";
+import { ACTIONS_CONDITIONS, SplitCommand } from "./split-command";
 
-export type Request = {
-  payload: {
-    [key: string]: any;
-  };
-  variables?: {
-    [key: string]: any;
-  };
-  functions?: {
-    [key: string]: any;
-  };
-  http?: {
-    [key: string]: any;
-  };
-};
+export interface Request {
+  payload: Record<string, unknown>;
+  variables?: Record<string, unknown>;
+  functions?: Record<string, unknown>;
+  http?: Record<string, unknown>;
+}
 
 export class Flow<T, V extends Partial<T> = T> {
   private splitCommand: typeof SplitCommand<T, V>;
@@ -44,12 +36,20 @@ export class Flow<T, V extends Partial<T> = T> {
     return this._req.variables;
   }
 
+  get functions() {
+    return this._req.functions;
+  }
+
+  get http() {
+    return this._req.http;
+  }
+
   split(
     conditional: ACTIONS_CONDITIONS,
     flow: {
       success: (flow: Flow<T, V>) => Flow<T, V>;
       failed: (flow: Flow<T, V>) => Flow<T, V>;
-    }
+    },
   ) {
     return this.execute(this.splitCommand, conditional, flow);
   }
@@ -58,47 +58,49 @@ export class Flow<T, V extends Partial<T> = T> {
     return this.execute(this.setVariableCommand, name, value);
   }
 
-  functionCall(
+  functionCall<U>(
     opts: {
       name: string;
-      fn: any;
+      fn: U;
     },
-    success: (flow: Flow<T, V>) => Flow<T, V>,
-    error: (flow: Flow<T, V>) => Flow<T, V>
+    next: {
+      success: (flow: Flow<T, V>) => Flow<T, V>;
+      error: (flow: Flow<T, V>) => Flow<T, V>;
+    },
   ) {
-    return this.execute(this.functionCallCommand, opts, success, error);
+    return this.execute(this.functionCallCommand, opts, next);
   }
 
-  httpCall(
+  httpCall<U>(
     http: {
       name: string;
       method: "GET" | "POST" | "PUT";
       url: string;
     },
     next: {
-      response: (flow: Flow<T, V>, data?: any) => Flow<T, V>;
+      response: (flow: Flow<T, V>, data: U) => Flow<T, V>;
       error: (flow: Flow<T, V>) => Flow<T, V>;
-    }
+    },
   ) {
     return this.execute(this.httpCallCommand, http, next);
   }
 
-  execute(command: any, ...args: any[]) {
-    const useLogger = (Instance: any) => {
+  execute(Command: new (t: Flow<T, V>) => Command, ...args: unknown[]) {
+    const useLogger = (Instance: new (t: Flow<T, V>) => Command) => {
       console.log("COMMAND: [", Instance.name, "] called with args: ", args); // TODO: rafaelib implement a logger here!
-      const i = new command(this);
+      const i = new Command(this);
 
       const mounted = i.mount(...args);
+
       console.log("POST-COMMAND: [", Instance.name, "] , ", this._req); // TODO: rafaelib implement a logger here!
 
       return mounted;
     };
 
-    return useLogger(command);
+    return useLogger(Command);
   }
 
   async run(): Promise<V> {
-    //@ts-ignore
-    return this._req as V;
+    return this._req as unknown as V;
   }
 }
