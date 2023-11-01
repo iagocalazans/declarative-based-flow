@@ -3,6 +3,7 @@
   "version": "0.0.10",
   "description": "A powerful and intuitive package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax.",
   "scripts": {
+    "test": "jest",
     "test:dev": "jest --watch",
     "build": "rm -Rf lib && tsc"
   },
