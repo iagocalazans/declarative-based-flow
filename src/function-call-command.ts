@@ -1,57 +1,45 @@
 import { Flow } from "./flow";
 import { Command } from "./command.interface";
-import axios from 'axios';
 
+export class FunctionCallCommand<T, V extends Partial<T> = T>
+  implements Command
+{
+  private _flow: Flow<T, V>;
 
-export class FunctionCallCommand<T, V extends Partial<T> = T> implements Command {
-    private _flow: Flow<T, V>;
+  constructor(flow: Flow<T, V>) {
+    this._flow = flow;
+  }
 
-    constructor(flow: Flow<T, V>) {
-        this._flow = flow;
-    }
-
-    mount({
-        name, 
-        method, 
-        url
-    }: {
-        name: string, 
-        method: "GET" | "POST" | "PUT", 
-        url: string
-    }, 
-    next: { 
-        response: (flow: Flow<T, V>, data?: any) => Flow<T, V>,  
-        error: (flow: Flow<T, V>) => Flow<T, V>
-    } ) {
-        if (['get', 'post', 'put'].indexOf(method.toLowerCase()) === -1) {
-            throw 'Invalid method, should be one of'
+  mount({ name, fn }: { name: string; fn: any }, success: any, error: any) {
+    new Promise(async (resolve, reject) => {
+      try {
+        resolve(await fn());
+      } catch (error) {
+        reject(error);
+      }
+    })
+      .then(({ data }: any) => {
+        if (!Reflect.has(this._flow.request, "functions")) {
+          Reflect.defineProperty(this._flow.request, "functions", {
+            enumerable: true,
+            value: {},
+          });
         }
 
-        const { response, error } = next
+        //@ts-ignore
+        Reflect.defineProperty(this._flow.request.functions, name, {
+          enumerable: true,
+          writable: false,
+          value: data,
+        });
 
-        axios({method: method, url: url}).then(
-                ({ data }) => {
-                    if (!Reflect.has(this._flow.request, name)) {
-                        Reflect.defineProperty(this._flow.request, 'functions', {
-                            enumerable: true,
-                            value: {}
-                        });
-                    }
-                    //@ts-ignore
-                    Reflect.defineProperty(this._flow.request.functions, name, {
-                        enumerable: true,
-                        writable: false,
-                        value: data
-                    });
+        success(this._flow);
+      })
+      .catch((err) => {
+        console.error(err);
+        error(this._flow);
+      });
 
-                    response(this._flow, data);
-                }
-            )
-            .catch(err => {
-                console.error(err);
-                error(this._flow);
-            })
-
-            return this._flow
-    }
+    return this._flow;
+  }
 }
