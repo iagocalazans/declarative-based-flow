@@ -23,13 +23,13 @@ export class Flow<T, V extends Partial<T> = T> {
   private splitCommand: typeof SplitCommand<T, V>;
   private setVariableCommand: typeof SetVariableCommand<T, V>;
   private httpCallCommand: typeof HttpCallCommand<T, V>;
-  private functionCallCommand: typeof FunctionCallCommand<T, V>; // TODO: rafaelib implement a FunctionCallCommand here!
+  private functionCallCommand: typeof FunctionCallCommand<T, V>;
 
   constructor(private readonly _req: Request) {
     this.splitCommand = SplitCommand<T, V>;
     this.setVariableCommand = SetVariableCommand<T, V>;
     this.httpCallCommand = HttpCallCommand<T, V>;
-    this.functionCallCommand = FunctionCallCommand<T, V>; // TODO: rafaelib implement a FunctionCallCommand here!
+    this.functionCallCommand = FunctionCallCommand<T, V>;
   }
 
   get request() {
