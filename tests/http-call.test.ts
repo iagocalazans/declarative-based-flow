@@ -7,7 +7,6 @@ type EmptyPayload = {
     payload: {}
 }
 
-
 const sampleResponse = {
     data: {
       userId: 1,
@@ -34,7 +33,7 @@ describe('given a flow is called with an empty payload and call external functio
         }>({ 
             payload: {} 
         })
-        .functionCall({
+        .httpCall({
                 name: 'widgetCall', 
                 method: 'GET', 
                 url: 'http://localhost:3000'
@@ -61,7 +60,7 @@ describe('given a flow is called with an empty payload and call external functio
         }>({ 
             payload: {} 
         })
-        .functionCall({
+        .httpCall({
                 name: 'widgetCall', 
                 method: 'GET', 
                 url: 'http://localhost:3000'
