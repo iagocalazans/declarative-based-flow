@@ -1,8 +1,19 @@
 import { Command } from "./command.interface";
 import { FunctionCallCommand } from "./function-call-command";
 import { HttpCallCommand } from "./http-call-command";
-import { SetVariableCommand } from "./set-variable-command";
 import { ACTIONS_CONDITIONS, SplitCommand } from "./split-command";
+import { SetVariableCommand } from "./set-variable-command";
+import winston from "winston";
+
+// TODO: REMOVE LOGGER TO ANOTHER FOLDER
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.simple(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "flow.log" }),
+  ],
+});
 
 export interface Request {
   payload: Record<string, unknown>;
@@ -87,12 +98,18 @@ export class Flow<T, V extends Partial<T> = T> {
 
   execute(Command: new (t: Flow<T, V>) => Command, ...args: unknown[]) {
     const useLogger = (Instance: new (t: Flow<T, V>) => Command) => {
-      console.log("COMMAND: [", Instance.name, "] called with args: ", args); // TODO: rafaelib implement a logger here!
+      logger.info(
+        `COMMAND: [${Instance.name}] called with args: ${JSON.stringify(args)}`
+      );
+        
       const i = new Command(this);
-
       const mounted = i.mount(...args);
 
-      console.log("POST-COMMAND: [", Instance.name, "] , ", this._req); // TODO: rafaelib implement a logger here!
+      logger.info(
+        `POST-COMMAND: [${
+          Instance.name
+        }] returned following output: ${JSON.stringify(this._req)}`
+      );
 
       return mounted;
     };
