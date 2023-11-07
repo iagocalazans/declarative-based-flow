@@ -98,17 +98,15 @@ export class Flow<T, V extends Partial<T> = T> {
 
   execute(Command: new (t: Flow<T, V>) => Command, ...args: unknown[]) {
     const useLogger = (Instance: new (t: Flow<T, V>) => Command) => {
-      logger.info(
-        `COMMAND: [${Instance.name}] called with args: ${JSON.stringify(args)}`
+      logger.debug(
+        `COMMAND: [ ${ Instance.name } ] called with args: ${ JSON.stringify(args, null, 2) }`
       );
         
       const i = new Command(this);
       const mounted = i.mount(...args);
 
       logger.info(
-        `POST-COMMAND: [${
-          Instance.name
-        }] returned following output: ${JSON.stringify(this._req)}`
+        `[ ${ Instance.name } ]: Returns with output: ${ JSON.stringify(this._req, null, 2) }`
       );
 
       return mounted;
