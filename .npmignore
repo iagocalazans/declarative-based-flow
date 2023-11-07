@@ -3,6 +3,6 @@
 jest.config.js
 .eslintrc.js
 .gitignore
-tests/
+test/
 src/
 tsconfig.json
