@@ -1,3 +1,4 @@
+export { CustomWidget } from './custom-widget';
 export { Compare } from './compare';
 export { Flow } from './flow.class';
 export { SetVariable } from './set-variable';

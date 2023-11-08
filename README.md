@@ -10,7 +10,7 @@ Fluent Syntax: Create workflows by chaining commands together in a declarative s
 
 Command Abstraction: Define individual commands or operations as separate modules, allowing for better code organization and reusability.
 
-<!-- Customizable Commands: Easily extend the package to include custom command classes that suit your specific needs, whether it's data transformation, external integrations, or business logic. -->
+Customizable Commands: Easily extend the package to include custom command classes that suit your specific needs, whether it's data transformation, external integrations, or business logic.
 
 Simplified Workflow: Focus on the high-level logic of your application, while the package handles the orchestration and execution of commands.
 
@@ -32,8 +32,8 @@ yarn add declarative-based-flow
 
 Flow is a specialized widget that represents the starting point of a workflow. It allows you to connect other widgets and execute the workflow. Here's how to create a Flow:
 
-```js
-const { Flow } = require('declarative-based-flow');
+```ts
+import { Flow } from 'declarative-based-flow';
 
 const myFlow = Flow.create('my_flow').start(yourFirstWidget).end();
 ```
@@ -42,8 +42,8 @@ const myFlow = Flow.create('my_flow').start(yourFirstWidget).end();
 
 SetVariable is a widget used to set variables in a workflow. It allows you to define variables and specify their values using whitelabel expressions. Here's how to create a SetVariable widget:
 
-```js
-const { SetVariable } = require('declarative-based-flow');
+```ts
+import { SetVariable } from 'declarative-based-flow';
 
 const mySetVariable = SetVariable.create('my_set_variable');
 mySetVariable.variable('myVar', '{{ payload.data.value }}');
@@ -53,8 +53,8 @@ mySetVariable.variable('myVar', '{{ payload.data.value }}');
 
 `Compare` is a utility class that provides comparison operations for use in conditional statements within the workflow. You can create a `Comparator` instance using the `Compare` class:
 
-```js
-const { Compare } = require('declarative-based-flow');
+```ts
+import { Compare } from 'declarative-based-flow';
 
 const myComparator = Compare.is(42);
 myComparator.equal(42); // true 
@@ -64,12 +64,58 @@ myComparator.equal(42); // true
 
 `Split` is a widget that allows you to branch the workflow based on a specified condition. It provides a `case` method to define the condition and separate paths for different outcomes. Here's how to create a `Split` widget:
 
-```js
-const { Split } = require('declarative-based-flow');
+```ts
+import { Split } from 'declarative-based-flow';
 
 const mySplit = Split.create('my_split');
 mySplit.case((data) => Compare.is(data.payload.value).equal('some_value'));
 mySplit.moveTo(anotherWidget).elseMoveTo(aDiferentWidget);
+```
+
+### Extending
+
+You can easily create custom command classes (as widgets) with `CustomWidget` to suit your specific needs. Whether it's data transformation, external integrations, or business logic, Declarative-Based Flow allows you to abstract and encapsulate these operations. Here's an example using `CustomWidget`:
+
+```ts
+import { CustomWidget } from 'declarative-based-flow';
+
+export class MyWidget extends CustomWidget {
+    private myActions = {
+        do: {
+            something: undefined
+        }
+    }
+
+    myCustomStep(someAction: any) {
+        this.myActions.do.something = someAction
+
+        return this;
+    }
+
+    async process(a: any): Promise<void> {
+        if (!Reflect.has(this.myActions.do, 'something')) {
+            throw new Error('Some error message!');
+        }
+
+        // TODO: Your business logic comes here!
+
+        super.register(`Info you want to log!`, 'info'); // Use super.register to log data on your process.
+
+        super.process(a);
+    }
+}
+```
+
+To use this customized `Widget` you should move as standard:
+
+```ts
+import { MyWidget } from './my-custom-widget'
+
+const myCustomWidget = MyWidget.create('my_custom_widget').myCustomStep(() => console.log("Easy to customize!"));
+
+// ... 
+
+Flow.create('unamed').start(myCustomWidget).end()(myDataToProcess);
 ```
 
 ### Examples

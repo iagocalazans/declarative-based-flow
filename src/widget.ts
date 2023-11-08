@@ -25,6 +25,18 @@ export class Widget {
         return new this(Symbol(name));
     }
 
+    protected moveTo(widget: Widget) {
+        this.success(widget);
+
+        return this;
+    }
+
+    protected elseMoveTo(widget: Widget) {
+        this.failed(widget);
+
+        return this;
+    }
+
     protected register(a: any, level: keyof Pick<Console, 'debug' | 'log' | 'info' | 'error'> = 'log'): void {
 
         // TODO: Must optmize debugging log
