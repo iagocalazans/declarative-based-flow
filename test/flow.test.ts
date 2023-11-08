@@ -35,6 +35,23 @@ class Widget {
 
         return a;
     }
+
+    protected alternate(a: any) {
+        // TODO: Work on validator here in try/catch then move foward to right or left...
+        
+        if (!Reflect.has(a, 'payload')) {
+            const payload = a;
+            a = { payload: payload };
+            Object.freeze(a.payload);
+        }
+
+
+        if (this.right) {
+            this.right.process(a);
+        }
+
+        return a;
+    }
 }
 
 class Flow extends Widget {
@@ -151,7 +168,7 @@ describe('Flow specs', () => {
     })
 });
 
-describe('Receives widget\'s', () => {
+describe('Receives SetVariable widget\'s', () => {
     let flow: (a: any) => any;
     
     beforeAll(() => {
@@ -211,6 +228,176 @@ describe('Receives widget\'s', () => {
                 myVarOne: 'that', 
                 myVarTwo: 'this', 
                 myVarThree: 'those' 
+            }
+        });
+    });
+});
+
+class Compare {
+    static is(value: any) {
+        return Comparator.create(value);
+    }
+}
+
+class Comparator {
+    private constructor(private readonly value: any) {}
+
+    static create(value: any) {
+        return new Comparator(value);
+    }
+
+    equal(comparator: any) {
+        return this.value === comparator;
+    }
+
+    notEqual(comparator: any) {
+        return this.value === comparator;
+    }
+
+    in(comparator: any[]) {
+        return !!comparator.find((el) => el === this.value);
+    }
+
+    notIn(comparator: any[]) {
+        return !comparator.find((el) => el === this.value);
+    }
+
+    greaterThan(comparator: any[]) {
+        return this.value > comparator
+    }
+
+    lesserThan(comparator: any[]) {
+        return this.value < comparator
+    }
+}
+
+
+class Split extends Widget {
+    private action: {
+        fn?: (a: any) => boolean
+    } = { 
+        fn: undefined
+    }
+
+    static create(name: string) {
+        return new this(Symbol(name));
+    }
+
+    moveTo(widget: Widget) {
+        super.success(widget);
+
+        return this;
+    }
+
+    elseMoveTo(widget: Widget) {
+        super.failed(widget);
+
+        return this;
+    }
+
+    case(fn: (a: any) => boolean) {
+        this.action.fn = fn;
+
+        return this;
+    }
+    
+    async process(a: any): Promise<any> {
+        if (!this.action.fn) {
+            throw new Error('To use Split you must set a .case((data: any) => Compare.is(data.payload.act.like.that).in([\'this\', \'those\', \'that\'])');
+        }
+
+        if (this.action.fn(a) === true) {
+            super.process(a);
+        }
+
+        if (this.action.fn(a) === false) {
+            //@ts-ignore
+            super.alternate(a);
+        }
+    }
+}
+
+describe('Receives Split widget\'s', () => {
+    let flow: (a: any) => any;
+    
+    beforeAll(() => {
+        amazingSetVariableWidgetOne.moveTo(
+            Split
+                .create('amazing_split_widget')
+                .case((data: any) => Compare
+                    .is(data.payload.act.like.that)
+                    .in(['this', 'those', 'that'])
+                )
+                .moveTo(
+                    SetVariable
+                        .create('amazing_set_variable_widget_three')
+                        .variable('myVarThree', '{{ payload.act.like.those }}'))
+                .elseMoveTo(
+                    SetVariable
+                    .create('amazing_set_variable_widget_two')
+                    .variable('myVarTwo', '{{ payload.act.like.this.should.be.this }}')
+                )
+            )
+        
+        flow = Flow.create('amazing_flow').start(amazingSetVariableWidgetOne).end();
+    })
+    
+    it('should miss myVarTwo if data.payload.act.like.that is in array', () => {
+        const payload = flow({
+            act: {
+                like: { 
+                    that: 'that', 
+                    this: { 
+                        should: { 
+                            be: { 
+                                this:'this' 
+                            } 
+                        } 
+                    }, 
+                    those: 'those' 
+                }
+            }
+        });
+
+        expect(payload).toMatchObject({
+            variables: { 
+                myVarOne: 'that',
+                myVarThree: 'those'
+            }
+        });
+        expect(payload).not.toMatchObject({
+            variables: { 
+                myVarTwo: 'this',
+            }
+        });
+    });
+
+    it('should not miss myVarTwo if data.payload.act.like.that is not in array', () => {
+        const payload = flow({
+            act: {
+                like: { 
+                    that: 'they', 
+                    this: { 
+                        should: { 
+                            be: { 
+                                this:'this' 
+                            } 
+                        } 
+                    }, 
+                    those: 'those' 
+                }
+            }
+        });
+
+        expect(payload).toMatchObject({
+            variables: { 
+                myVarOne: 'they',
+                myVarTwo: 'this',
+            }
+        });
+        expect(payload).not.toMatchObject({
+            variables: { 
+                myVarThree: 'those'
             }
         });
     });
