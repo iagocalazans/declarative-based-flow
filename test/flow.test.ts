@@ -5,8 +5,6 @@ class Widget {
         return this.uniqueName;
     }
 
-    // TODO: Must have a validator too?
-
     protected success(widget: Widget) {
         this.left = widget;
     }
@@ -19,35 +17,22 @@ class Widget {
         return new this(Symbol(name));
     }
 
-    process(a: any) {
-        // TODO: Work on validator here in try/catch then move foward to right or left...
-        
+    async process(a: any) {
         if (!Reflect.has(a, 'payload')) {
             const payload = a;
             a = { payload: payload };
             Object.freeze(a.payload);
         }
 
-
-        if (this.left) {
-            this.left.process(a);
-        }
-
-        return a;
-    }
-
-    protected alternate(a: any) {
-        // TODO: Work on validator here in try/catch then move foward to right or left...
         
-        if (!Reflect.has(a, 'payload')) {
-            const payload = a;
-            a = { payload: payload };
-            Object.freeze(a.payload);
-        }
-
-
-        if (this.right) {
-            this.right.process(a);
+        try {
+            if (this.left) {
+                await this.left?.process(a);
+            }
+        } catch {
+            if (this.left?.right) {
+                await this.left?.right.process(a);
+            }
         }
 
         return a;
@@ -208,7 +193,7 @@ describe('Receives SetVariable widget\'s', () => {
             }
         });
 
-        expect(payload).toMatchObject({
+        expect(payload).resolves.toMatchObject({
             payload: {
                 act: {
                     like: { 
@@ -306,13 +291,13 @@ class Split extends Widget {
             throw new Error('To use Split you must set a .case((data: any) => Compare.is(data.payload.act.like.that).in([\'this\', \'those\', \'that\'])');
         }
 
+        
         if (this.action.fn(a) === true) {
-            super.process(a);
+            await super.process(a);
         }
-
+        
         if (this.action.fn(a) === false) {
-            //@ts-ignore
-            super.alternate(a);
+            throw 'force right side'
         }
     }
 }
@@ -331,7 +316,8 @@ describe('Receives Split widget\'s', () => {
                 .moveTo(
                     SetVariable
                         .create('amazing_set_variable_widget_three')
-                        .variable('myVarThree', '{{ payload.act.like.those }}'))
+                        .variable('myVarThree', '{{ payload.act.like.those }}')
+                )
                 .elseMoveTo(
                     SetVariable
                     .create('amazing_set_variable_widget_two')
@@ -359,13 +345,13 @@ describe('Receives Split widget\'s', () => {
             }
         });
 
-        expect(payload).toMatchObject({
+        expect(payload).resolves.toMatchObject({
             variables: { 
                 myVarOne: 'that',
                 myVarThree: 'those'
             }
         });
-        expect(payload).not.toMatchObject({
+        expect(payload).resolves.not.toMatchObject({
             variables: { 
                 myVarTwo: 'this',
             }
@@ -389,13 +375,13 @@ describe('Receives Split widget\'s', () => {
             }
         });
 
-        expect(payload).toMatchObject({
+        expect(payload).resolves.toMatchObject({
             variables: { 
                 myVarOne: 'they',
                 myVarTwo: 'this',
             }
         });
-        expect(payload).not.toMatchObject({
+        expect(payload).resolves.not.toMatchObject({
             variables: { 
                 myVarThree: 'those'
             }
