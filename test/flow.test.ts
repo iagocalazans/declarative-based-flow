@@ -5,6 +5,14 @@ class Widget {
         return this.uniqueName;
     }
 
+    get moveToName() {
+        return this.left?.name.description
+    }
+
+    get elseMoveToName() {
+        return this.right?.name.description
+    }
+
     protected success(widget: Widget) {
         this.left = widget;
     }
@@ -17,7 +25,17 @@ class Widget {
         return new this(Symbol(name));
     }
 
+    protected register(a: any, level: keyof Pick<Console, 'debug' | 'log' | 'info' | 'error'> = 'log'): void {
+
+        // TODO: Must optmize debugging log
+
+        if (level !== 'debug' && process.env.ENV !== 'development') {
+            console[level](`[${this.constructor.name}: ${this.uniqueName.description}]: => ${JSON.stringify(a, null, 2)}`);
+        }
+    }
+
     async process(a: any) {
+        
         if (!Reflect.has(a, 'payload')) {
             const payload = a;
             a = { payload: payload };
@@ -34,7 +52,8 @@ class Widget {
                 await this.left?.right.process(a);
             }
         }
-
+        
+        this.register(a, 'debug');
         return a;
     }
 }
@@ -118,15 +137,18 @@ class SetVariable extends Widget {
                 enumerable: true,
                 value: {}
             })
-
         }
+
+        const parsedValue = processWhiteLabel(this.action.set.use, a)
 
         Reflect.defineProperty(a.variables, this.action.set.var, {
             configurable: false,
             writable: false,
             enumerable: true,
-            value: processWhiteLabel(this.action.set.use, a)
+            value: parsedValue
         })
+
+        super.register(`Defined var ${this.action.set.var} = ${parsedValue}`, 'info');
 
         super.process(a);
     }
@@ -176,7 +198,7 @@ describe('Receives SetVariable widget\'s', () => {
         expect(widget).toBeInstanceOf(SetVariable);
     })
     
-    it('should create two SetVariable widget\'s', () => {
+    it('should run with three SetVariable widget\'s', () => {
         const payload = flow({
             act: {
                 like: { 
@@ -293,10 +315,12 @@ class Split extends Widget {
 
         
         if (this.action.fn(a) === true) {
+            super.register(`Moved to: ${super.moveToName}`, 'info')
             await super.process(a);
         }
         
         if (this.action.fn(a) === false) {
+            super.register(`Moved to: ${super.elseMoveToName}`, 'info')
             throw 'force right side'
         }
     }
