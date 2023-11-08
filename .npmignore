@@ -6,3 +6,4 @@ jest.config.js
 test/
 src/
 tsconfig.json
+coverage/

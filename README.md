@@ -28,93 +28,104 @@ yarn add declarative-based-flow
 
 ## USAGE
 
-#### Just call `flow` to begin
+### Flow
 
-```ts
- import { flow, ACTIONS } from 'declarative-based-flow';
+Flow is a specialized widget that represents the starting point of a workflow. It allows you to connect other widgets and execute the workflow. Here's how to create a Flow:
 
- const data = flow({ 
-        payload: { 
-            value: '1022' 
-        } 
-    })
+```js
+const { Flow } = require('declarative-based-flow');
+
+const myFlow = Flow.create('my_flow').start(yourFirstWidget).end();
 ```
 
-#### and when finished, just `run` it
+### SetVariable
 
-```ts
- await data.run();
+SetVariable is a widget used to set variables in a workflow. It allows you to define variables and specify their values using whitelabel expressions. Here's how to create a SetVariable widget:
+
+```js
+const { SetVariable } = require('declarative-based-flow');
+
+const mySetVariable = SetVariable.create('my_set_variable');
+mySetVariable.variable('myVar', '{{ payload.data.value }}');
 ```
 
-#### A complete execution should looks like
+### Compare
 
-```ts
- const data = flow({ 
-        payload: { 
-            value: '1022' 
-        } 
-    })
-    .split(
-        { 
-            property: 'value', // => payload.value
-            action: ACTIONS.GREATER_THAN, 
-            matcher: 1_023 
-        }, 
-        {
-            success: (next) => next
-                .setVariable('path', 'success')
-                .setVariable('fromPayload', next.payload.value), 
-            failed: (next) => next
-                .setVariable('path', 'failed')
-        }
-    )
-    .run();
+`Compare` is a utility class that provides comparison operations for use in conditional statements within the workflow. You can create a `Comparator` instance using the `Compare` class:
 
- console.log(data); // { payload: { value: '1022' }, variables: { path: 'failed', fromPayload: '1022' } }
+```js
+const { Compare } = require('declarative-based-flow');
+
+const myComparator = Compare.is(42);
+myComparator.equal(42); // true 
 ```
 
-#### The more you combine methods, more you flow
+### Split
+
+`Split` is a widget that allows you to branch the workflow based on a specified condition. It provides a `case` method to define the condition and separate paths for different outcomes. Here's how to create a `Split` widget:
+
+```js
+const { Split } = require('declarative-based-flow');
+
+const mySplit = Split.create('my_split');
+mySplit.case((data) => Compare.is(data.payload.value).equal('some_value'));
+mySplit.moveTo(anotherWidget).elseMoveTo(aDiferentWidget);
+```
+
+### Examples
+
+The package includes examples of how to use these widgets to build and execute workflows. You can refer to the provided test file for detailed usage examples:
+
+- Creating and connecting widgets
+- Defining variables with `SetVariable`
+- Using `Compare` for conditional checks (mostly inside `Split`)
+- Branching the workflow with `Split`
+
+These examples should help you get started with building complex workflows using this package.
+
+A fully running code should be like this:
 
 ```ts
- data.functionCall({
-        name: 'widgetCall', 
-        method: 'GET', 
-        url: 'http://localhost:3000'
-    }, {
-        response: (next, data: SampleResponseType) => next
-            .split(
-                { 
-                    property: 'value', // => payload.value
-                    action: ACTIONS.GREATER_THAN, 
-                    matcher: 1_023 
+    const amazingSetVariableWidgetOne = SetVariable
+        .create('amazing_set_variable_widget_one')
+        .variable('myVarOne', '{{ payload.act.like.that }}');
+
+    amazingSetVariableWidgetOne.moveTo(
+        Split
+            .create('amazing_split_widget')
+            .case((data: any) => Compare
+                .is(data.payload.act.like.that)
+                .in(['this', 'those', 'that'])
+            )
+            .moveTo(
+                SetVariable
+                    .create('amazing_set_variable_widget_three')
+                    .variable('myVarThree', '{{ payload.act.like.those }}')
+            )
+            .elseMoveTo(
+                SetVariable
+                .create('amazing_set_variable_widget_two')
+                .variable('myVarTwo', '{{ payload.act.like.this.should.be.this }}')
+            )
+        )
+    
+    const flow = Flow.create('amazing_flow').start(amazingSetVariableWidgetOne).end();
+
+    const payload = flow({
+        act: {
+            like: { 
+                that: 'that', 
+                this: { 
+                    should: { 
+                        be: { 
+                            this:'this' 
+                        } 
+                    } 
                 }, 
-                {
-                    success: (next) => next
-                        .setVariable('path', 'success')
-                        .setVariable('userId', data.userId), 
-                    failed: (next) => next
-                        .setVariable('path', 'failed')
-                }
-            ), 
-        error: (next) => next 
-    })
-    .run();
-
- console.log(data); 
-    // { 
-    //     payload: { 
-    //         value: '1024' 
-    //     }, 
-    //     variables: { 
-    //         path: 'success', 
-    //         userId: 'user.name' 
-    //     }, 
-    //     functions: { 
-    //         widgetCall: { 
-    //             userId: 'user.name' 
-    //         } 
-    //     } 
-    // }
+                those: 'those' 
+            }
+        }
+    });
 ```
 
 ### Why Use Declarative-Based Flow
@@ -123,6 +134,16 @@ Declarative-Based Flow is ideal for projects that involve complex, multi-step pr
 
 Simplify your application's control flow and enhance your codebase with Declarative-Based Flow.
 
-## License
+### License
 
-This package is distributed under the MIT License. Feel free to use it in your projects, and don't forget to star the repository on GitHub if you find it helpful!
+This package is provided under the MIT License. You can find the license details in the `LICENSE` file included with the package.
+
+### Contributions
+
+Contributions and improvements to this package are welcome. If you encounter any issues or have ideas for enhancements, please open an issue or submit a pull request on the package's GitHub repository.
+
+### Author
+
+This package was created by Iago Calazans. You can contact the author at <iago.calazans@gmail.com> for any questions or inquiries.
+
+Enjoy using this package to build and execute complex workflows in your Node.js applications!
