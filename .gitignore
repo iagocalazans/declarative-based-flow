@@ -3,3 +3,4 @@ lib/
 .npmrc
 coverage/
 *.log
+.claude/

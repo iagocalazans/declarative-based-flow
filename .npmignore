@@ -3,7 +3,14 @@
 jest.config.js
 .eslintrc.js
 .gitignore
+
 test/
+
+
 src/
 tsconfig.json
+
 coverage/
+
+.claude/
+examples/
