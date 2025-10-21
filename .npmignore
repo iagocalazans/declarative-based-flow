@@ -1,16 +1,42 @@
+# Development files
+src/
+test/
+examples/
+coverage/
 .vscode/
 .github/
+.claude/
+
+# Config files
+tsconfig.json
 jest.config.js
 .eslintrc.js
+.prettierrc
 .gitignore
+.gitattributes
+.editorconfig
 
-test/
+# Documentation (kept in published package via files field)
+CLAUDE.md
 
+# Build artifacts
+*.log
+*.tgz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-src/
-tsconfig.json
+# OS files
+.DS_Store
+Thumbs.db
 
-coverage/
+# IDE
+*.swp
+*.swo
+*~
+.idea/
 
-.claude/
-examples/
+# Temporary files
+*.tmp
+*.temp

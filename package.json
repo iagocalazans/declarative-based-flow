@@ -1,38 +1,59 @@
 {
   "name": "declarative-based-flow",
   "version": "0.1.0",
-  "description": "A powerful and intuitive package designed to simplify the construction of complex, structured workflows using a declarative and fluent syntax.",
+  "description": "Build complex, structured workflows using a declarative and fluent TypeScript syntax. Perfect for ETL pipelines, data validation, and business process automation.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "jest",
     "test:dev": "jest --watch",
     "test:coverage": "jest --verbose --collectCoverage",
     "build": "rm -Rf lib && tsc",
+    "prepublishOnly": "npm run build && npm test",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
-  },
-  "main": "lib/index.js",
-  "directories": {
-    "lib": "lib"
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "prepare": "npm run build"
   },
   "keywords": [
     "declarative",
-    "flow"
-  ],
-  "contributors": [
-    {
-      "email": "rafaeliunes97@gmail.com",
-      "name": "Rafael Iunes"
-    }
+    "flow",
+    "workflow",
+    "pipeline",
+    "etl",
+    "orchestration",
+    "typescript",
+    "fluent-api",
+    "chainable",
+    "data-transformation",
+    "validation",
+    "business-logic",
+    "automation",
+    "state-machine"
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:iagocalazans/declarative-based-flow.git"
+    "url": "git+https://github.com/iagocalazans/declarative-based-flow.git"
   },
   "bugs": {
     "url": "https://github.com/iagocalazans/declarative-based-flow/issues"
   },
+  "homepage": "https://github.com/iagocalazans/declarative-based-flow#readme",
   "author": "Iago Calazans <iago.calazans@gmail.com>",
+  "contributors": [
+    {
+      "name": "Rafael Iunes",
+      "email": "rafaeliunes97@gmail.com"
+    }
+  ],
   "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.6",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
@@ -46,9 +67,5 @@
     "prettier": "^3.0.3",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
-  },
-  "dependencies": {
-    "axios": "^1.6.0",
-    "winston": "^3.11.0"
   }
 }
