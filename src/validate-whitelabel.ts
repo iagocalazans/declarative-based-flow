@@ -1,7 +1,7 @@
 function findObjectValue<T extends Record<string, any>>(
   object: T,
   keys: [keyof T],
-  index = 0
+  index = 0,
 ) {
   if (index < keys.length - 1 && Reflect.has(object, keys[index])) {
     const prop = Reflect.get(object, keys[index]);
@@ -28,7 +28,7 @@ function useWhiteLabel<T extends Record<string, any>>(label: string) {
 
 export function processWhiteLabel<T extends Record<string, any>>(
   label: string,
-  object: T
+  object: T,
 ) {
   return findObjectValue(object, useWhiteLabel<T>(label));
 }

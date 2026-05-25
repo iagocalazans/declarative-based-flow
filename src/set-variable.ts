@@ -1,42 +1,55 @@
 import { isValidLabel, processWhiteLabel } from "./validate-whitelabel";
 import { Widget } from "./widget";
 
+type VariableAction = {
+  var: string;
+  use: unknown;
+};
+
+/**
+ * Variable extraction widget.
+ *
+ * Resolves one or more template expressions (`{{ payload.path.to.value }}`) or
+ * literal values and stores each as an immutable entry on the context's
+ * `variables` bag. Multiple `variable()` calls accumulate, so a single widget
+ * can extract several values.
+ */
 export class SetVariable extends Widget {
-  private action: {
-    set: {
-      var?: string;
-      use?: unknown;
-    };
-  } = {
-    set: {
-      var: undefined,
-      use: undefined,
-    },
-  };
+  private actions: VariableAction[] = [];
 
   static create(name: string) {
     return new this(Symbol(name));
   }
 
+  /**
+   * Connects the next widget in the success path.
+   *
+   * @param widget - Widget to execute after this one.
+   * @returns This widget for chaining.
+   */
   moveTo(widget: Widget) {
     super.success(widget);
 
     return this;
   }
 
+  /**
+   * Declares a variable to extract. Can be called multiple times.
+   *
+   * @param varName - Name of the variable to store on `variables`.
+   * @param whitelabel - Template expression to resolve, or a literal value.
+   * @returns This widget for chaining.
+   */
   variable(varName: string, whitelabel: string) {
-    this.action.set = {
-      var: varName,
-      use: whitelabel,
-    };
+    this.actions.push({ var: varName, use: whitelabel });
 
     return this;
   }
 
-  async process(a: any): Promise<any> {
-    if (!this.action.set.use || !this.action.set.var) {
+  protected async run(a: any): Promise<void> {
+    if (this.actions.length === 0) {
       throw new Error(
-        'To use SetVariable you must set .add("varName", "{{ whitelabel.to.use }}")'
+        'To use SetVariable you must set .variable("varName", "{{ whitelabel.to.use }}")'
       );
     }
 
@@ -48,22 +61,19 @@ export class SetVariable extends Widget {
       });
     }
 
-    const parsedValue = isValidLabel(this.action.set.use)
-      ? processWhiteLabel(this.action.set.use as string, a)
-      : this.action.set.use;
+    for (const action of this.actions) {
+      const parsedValue = isValidLabel(action.use)
+        ? processWhiteLabel(action.use as string, a)
+        : action.use;
 
-    Reflect.defineProperty(a.variables, this.action.set.var, {
-      configurable: false,
-      writable: false,
-      enumerable: true,
-      value: parsedValue,
-    });
+      Reflect.defineProperty(a.variables, action.var, {
+        configurable: false,
+        writable: false,
+        enumerable: true,
+        value: parsedValue,
+      });
 
-    super.register(
-      `Defined var ${this.action.set.var} = ${parsedValue}`,
-      "info"
-    );
-
-    super.process(a);
+      super.register(`Defined var ${action.var} = ${parsedValue}`, "info");
+    }
   }
 }

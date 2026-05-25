@@ -1,6 +1,6 @@
 {
   "name": "declarative-based-flow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Build complex, structured workflows using a declarative and fluent TypeScript syntax. Perfect for ETL pipelines, data validation, and business process automation.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -42,7 +42,7 @@
   "bugs": {
     "url": "https://github.com/iagocalazans/declarative-based-flow/issues"
   },
-  "homepage": "https://github.com/iagocalazans/declarative-based-flow#readme",
+  "homepage": "https://www.npmjs.com/package/declarative-based-flow",
   "author": "Iago Calazans <iago.calazans@gmail.com>",
   "contributors": [
     {
