@@ -152,7 +152,7 @@ const result = await flow(inputData);
 
 ## TypeScript Configuration
 
-- **Target:** ES6
+- **Target:** ES2022
 - **Module:** CommonJS (for npm distribution)
 - **Strict Mode:** Enabled
 - **Output:** `./lib` with declaration files
@@ -205,10 +205,11 @@ SetVariable.create('extract1')
 ## Dependencies
 
 **Runtime:**
-- `axios` (^1.6.0) - Available for HTTP operations in custom widgets
-- `winston` (^3.11.0) - Advanced logging (not currently used in core)
+- None. The library has zero runtime dependencies.
 
 **Dev:**
-- TypeScript (^5.2.2) with strict mode
-- Jest + ts-jest for testing with ESM support
-- ESLint + Prettier for code quality
+- TypeScript (^5.9.3) with strict mode
+- Jest (^30) + ts-jest for testing with ESM support
+- ESLint (^9, flat config in `eslint.config.mjs`) with typescript-eslint + Prettier for code quality
+
+**Engines:** Node.js `>=22.0.0` (see `.nvmrc`).
