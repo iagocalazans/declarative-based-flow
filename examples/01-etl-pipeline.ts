@@ -1,45 +1,42 @@
 /**
  * ETL Pipeline Example
  *
- * This example demonstrates how to build an ETL (Extract, Transform, Load) pipeline
- * for processing user data from an API, validating it, transforming it, and then
- * routing it to different destinations based on business rules.
+ * Demonstrates a classic Extract, Transform, Load pipeline: data is fetched from
+ * an API, validated, transformed, and routed to different destinations based on
+ * business rules.
+ *
+ * Custom widgets here use the `run()` lifecycle hook: implement the operation
+ * and let the engine advance the workflow. Awaited delays simulate real I/O, and
+ * because the engine awaits the whole chain, the resolved result reflects every
+ * stage having completed.
  *
  * Use Case: Customer data synchronization between systems
  */
 
 import { Flow, SetVariable, Split, Compare, CustomWidget } from '../src';
 
-// Custom widget to fetch data from API
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 class FetchCustomersWidget extends CustomWidget {
-  async process(data: any): Promise<void> {
-    try {
-      // Simulate API call
-      const customers = [
-        { id: 1, name: 'John Doe', email: 'john@example.com', age: 30, country: 'USA', status: 'active' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', age: 25, country: 'UK', status: 'active' },
-        { id: 3, name: 'Bob Johnson', email: 'bob@example.com', age: 45, country: 'USA', status: 'inactive' },
-      ];
+  protected async run(data: any): Promise<void> {
+    await delay(30);
 
-      // Add fetched data to payload
-      data.payload.customers = customers;
+    data.payload.customers = [
+      { id: 1, name: 'John Doe', email: 'John@Example.com', age: 30, country: 'USA', status: 'active' },
+      { id: 2, name: 'Jane Smith', email: 'Jane@Example.com', age: 25, country: 'UK', status: 'active' },
+      { id: 3, name: 'Bob Johnson', email: 'Bob@Example.com', age: 45, country: 'USA', status: 'inactive' },
+    ];
 
-      this.register('Fetched customers from API', 'info');
-      await super.process(data);
-    } catch (error) {
-      this.register(`Error fetching customers: ${error}`, 'error');
-      throw error;
-    }
+    this.register('Fetched customers from API', 'info');
   }
 }
 
-// Custom widget to transform customer data
 class TransformCustomersWidget extends CustomWidget {
-  async process(data: any): Promise<void> {
-    const customers = data.payload.customers || [];
+  protected async run(data: any): Promise<void> {
+    const customers = data.payload.customers ?? [];
 
-    // Transform data: add full name, normalize email
-    const transformedCustomers = customers.map((customer: any) => ({
+    data.payload.transformedCustomers = customers.map((customer: any) => ({
       ...customer,
       fullName: customer.name,
       email: customer.email.toLowerCase(),
@@ -47,104 +44,87 @@ class TransformCustomersWidget extends CustomWidget {
       processedAt: new Date().toISOString(),
     }));
 
-    data.payload.transformedCustomers = transformedCustomers;
-    this.register(`Transformed ${transformedCustomers.length} customers`, 'info');
-    await super.process(data);
+    this.register(
+      `Transformed ${data.payload.transformedCustomers.length} customers`,
+      'info'
+    );
   }
 }
 
-// Custom widget to load data to destination
 class LoadToDestinationWidget extends CustomWidget {
-  private destination: string = '';
+  private destination = '';
+
+  static create(name: string) {
+    return new this(Symbol(name));
+  }
 
   setDestination(destination: string) {
     this.destination = destination;
+
     return this;
   }
 
-  async process(data: any): Promise<void> {
-    const customers = data.payload.transformedCustomers || [];
+  protected async run(data: any): Promise<void> {
+    await delay(20);
 
-    // Simulate loading to destination (database, API, file, etc.)
+    const customers = data.payload.transformedCustomers ?? [];
     this.register(
       `Loading ${customers.length} customers to ${this.destination}`,
       'info'
     );
 
-    // Here you would implement actual loading logic
     data.payload.loadedTo = this.destination;
     data.payload.loadedCount = customers.length;
-
-    await super.process(data);
   }
 }
 
-// Build the ETL pipeline
+class NoCustomersWidget extends CustomWidget {
+  protected async run(data: any): Promise<void> {
+    this.register('No customers to process', 'warn');
+    data.payload.result = 'NO_CUSTOMERS';
+  }
+}
+
 const buildETLPipeline = () => {
-  // Step 1: Fetch data
   const fetchWidget = FetchCustomersWidget.create('fetch_customers');
 
-  // Step 2: Extract total count
-  const extractCount = SetVariable
-    .create('extract_customer_count')
-    .variable('totalCustomers', '{{ payload.customers.length }}');
+  const extractCount = SetVariable.create('extract_customer_count').variable(
+    'totalCustomers',
+    '{{ payload.customers.length }}'
+  );
 
-  // Step 3: Transform data
   const transformWidget = TransformCustomersWidget.create('transform_customers');
 
-  // Step 4: Check if we have customers to process
-  const checkCustomersExist = Split
-    .create('check_customers_exist')
-    .case((data: any) => Compare
-      .is(data.variables.totalCustomers)
-      .greaterThan(0)
-    );
+  const checkCustomersExist = Split.create('check_customers_exist').case(
+    (data: any) => Compare.is(data.variables.totalCustomers).greaterThan(0)
+  );
 
-  // Step 5a: If customers exist, route based on country
-  const routeByCountry = Split
-    .create('route_by_country')
-    .case((data: any) => {
-      const customers = data.payload.transformedCustomers || [];
-      const usaCustomers = customers.filter((c: any) => c.country === 'USA');
-      return usaCustomers.length > 0;
-    });
+  const routeByCountry = Split.create('route_by_country').case((data: any) => {
+    const customers = data.payload.transformedCustomers ?? [];
+    return customers.some((customer: any) => customer.country === 'USA');
+  });
 
-  // Load to USA database
-  const loadToUSA = LoadToDestinationWidget.create('load_to_usa').setDestination('USA_DATABASE');
+  const loadToUSA = LoadToDestinationWidget.create('load_to_usa').setDestination(
+    'USA_DATABASE'
+  );
 
-  // Load to International database
-  const loadToInternational = LoadToDestinationWidget.create('load_to_intl').setDestination('INTL_DATABASE');
+  const loadToInternational = LoadToDestinationWidget.create(
+    'load_to_intl'
+  ).setDestination('INTL_DATABASE');
 
-  // Step 5b: If no customers, log warning
-  class NoCustomersWidget extends CustomWidget {
-    async process(data: any): Promise<void> {
-      this.register('No customers to process', 'warn');
-      data.payload.result = 'NO_CUSTOMERS';
-      await super.process(data);
-    }
-  }
   const noCustomersWidget = NoCustomersWidget.create('no_customers_handler');
 
-  // Connect the pipeline
   fetchWidget.moveTo(extractCount);
   extractCount.moveTo(transformWidget);
   transformWidget.moveTo(checkCustomersExist);
 
-  checkCustomersExist
-    .moveTo(routeByCountry)
-    .elseMoveTo(noCustomersWidget);
+  checkCustomersExist.moveTo(routeByCountry).elseMoveTo(noCustomersWidget);
 
-  routeByCountry
-    .moveTo(loadToUSA)
-    .elseMoveTo(loadToInternational);
+  routeByCountry.moveTo(loadToUSA).elseMoveTo(loadToInternational);
 
-  // Create and return the flow
-  return Flow.create('etl_customer_pipeline')
-    .start(fetchWidget)
-    .end();
+  return Flow.create('etl_customer_pipeline').start(fetchWidget).end();
 };
 
-// Execute the pipeline
 const runExample = async () => {
   console.log('=== ETL Pipeline Example ===\n');
 
@@ -162,7 +142,6 @@ const runExample = async () => {
   console.log(JSON.stringify(result.variables, null, 2));
 };
 
-// Run if executed directly
 if (require.main === module) {
   runExample().catch(console.error);
 }

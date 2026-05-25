@@ -10,19 +10,20 @@
 
 import { Flow, SetVariable, Split, Compare, CustomWidget } from '../src';
 
-// Custom widget to enrich data
 class EnrichDataWidget extends CustomWidget {
-  async process(data: any): Promise<void> {
+  protected async run(data: any): Promise<void> {
     const userId = data.variables.userId;
 
-    // Simulate enrichment from external API
     const enrichmentData: Record<string, any> = {
       '101': { preferences: { theme: 'dark', language: 'en' }, loyalty: 'gold' },
       '102': { preferences: { theme: 'light', language: 'es' }, loyalty: 'silver' },
       '103': { preferences: { theme: 'dark', language: 'fr' }, loyalty: 'bronze' },
     };
 
-    const enrichment = enrichmentData[userId] || { preferences: {}, loyalty: 'none' };
+    const enrichment = enrichmentData[userId] || {
+      preferences: {},
+      loyalty: 'none',
+    };
 
     data.payload.enrichment = enrichment;
 
@@ -30,9 +31,8 @@ class EnrichDataWidget extends CustomWidget {
   }
 }
 
-// Custom widget to normalize data structure
 class NormalizeDataWidget extends CustomWidget {
-  async process(data: any): Promise<void> {
+  protected async run(data: any): Promise<void> {
     const normalized = {
       user: {
         id: data.variables.userId,
@@ -65,16 +65,20 @@ class NormalizeDataWidget extends CustomWidget {
   }
 }
 
-// Custom widget to format output
 class FormatOutputWidget extends CustomWidget {
-  private format: string;
+  private format = 'MINIMAL';
 
-  constructor(name: string, format: string) {
-    super(name);
-    this.format = format;
+  static create(name: string) {
+    return new this(Symbol(name));
   }
 
-  async process(data: any): Promise<void> {
+  setFormat(format: string) {
+    this.format = format;
+
+    return this;
+  }
+
+  protected async run(data: any): Promise<void> {
     const normalized = data.payload.normalized;
 
     if (this.format === 'SUMMARY') {
@@ -98,92 +102,76 @@ class FormatOutputWidget extends CustomWidget {
   }
 }
 
-// Build a complex data transformation workflow
+class ComputeFieldsWidget extends CustomWidget {
+  protected async run(data: any): Promise<void> {
+    const fullName = `${data.variables.firstName} ${data.variables.lastName}`;
+    Object.defineProperty(data.variables, 'fullName', {
+      value: fullName,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+
+    const fullAddress = `${data.variables.street}, ${data.variables.city}, ${data.variables.country}`;
+    Object.defineProperty(data.variables, 'fullAddress', {
+      value: fullAddress,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+
+    this.register('Computed fields created', 'info');
+  }
+}
+
 const buildDataTransformationWorkflow = () => {
-  // Step 1: Extract basic user information
-  const extractBasicInfo = SetVariable
-    .create('extract_basic_info')
+  const extractBasicInfo = SetVariable.create('extract_basic_info')
     .variable('userId', '{{ payload.data.user.id }}')
     .variable('firstName', '{{ payload.data.user.profile.name.first }}')
     .variable('lastName', '{{ payload.data.user.profile.name.last }}');
 
-  // Step 2: Extract contact information
-  const extractContactInfo = SetVariable
-    .create('extract_contact_info')
+  const extractContactInfo = SetVariable.create('extract_contact_info')
     .variable('userEmail', '{{ payload.data.user.contact.email }}')
     .variable('userPhone', '{{ payload.data.user.contact.phone }}');
 
-  // Step 3: Extract address information
-  const extractAddressInfo = SetVariable
-    .create('extract_address_info')
+  const extractAddressInfo = SetVariable.create('extract_address_info')
     .variable('street', '{{ payload.data.user.address.street }}')
     .variable('city', '{{ payload.data.user.address.city }}')
     .variable('country', '{{ payload.data.user.address.country }}');
 
-  // Step 4: Extract metadata
-  const extractMetadata = SetVariable
-    .create('extract_metadata')
+  const extractMetadata = SetVariable.create('extract_metadata')
     .variable('accountAge', '{{ payload.data.metadata.accountAge }}')
     .variable('isPremium', '{{ payload.data.metadata.premium }}')
     .variable('totalPurchases', '{{ payload.data.metadata.purchases.total }}');
 
-  // Step 5: Create computed variables (full name and full address)
-  const createComputedFields = new (class extends CustomWidget {
-    async process(data: any): Promise<void> {
-      // Create full name
-      const fullName = `${data.variables.firstName} ${data.variables.lastName}`;
-      Object.defineProperty(data.variables, 'fullName', {
-        value: fullName,
-        writable: false,
-        enumerable: true,
-        configurable: false,
-      });
+  const createComputedFields = ComputeFieldsWidget.create(
+    'create_computed_fields'
+  );
 
-      // Create full address
-      const fullAddress = `${data.variables.street}, ${data.variables.city}, ${data.variables.country}`;
-      Object.defineProperty(data.variables, 'fullAddress', {
-        value: fullAddress,
-        writable: false,
-        enumerable: true,
-        configurable: false,
-      });
+  const enrichData = EnrichDataWidget.create('enrich_data');
 
-      this.register('Computed fields created', 'info');
-    }
-  })('create_computed_fields');
+  const normalizeData = NormalizeDataWidget.create('normalize_data');
 
-  // Step 6: Enrich with external data
-  const enrichData = new EnrichDataWidget('enrich_data');
+  const checkPremiumStatus = Split.create('check_premium_status').case(
+    (data: any) => Compare.is(data.variables.isPremium).equal(true)
+  );
 
-  // Step 7: Normalize the data structure
-  const normalizeData = new NormalizeDataWidget('normalize_data');
+  const formatPremiumOutput = FormatOutputWidget.create(
+    'format_premium_output'
+  ).setFormat('FULL');
 
-  // Step 8: Check if user is premium for output formatting
-  const checkPremiumStatus = Split
-    .create('check_premium_status')
-    .case((data: any) => Compare
-      .is(data.variables.isPremium)
-      .equal(true)
-    );
+  const checkPurchaseCount = Split.create('check_purchase_count').case(
+    (data: any) => Compare.is(data.variables.totalPurchases).greaterThan(10)
+  );
 
-  // Premium users get full format
-  const formatPremiumOutput = new FormatOutputWidget('format_premium_output', 'FULL');
+  const formatSummaryOutput = FormatOutputWidget.create(
+    'format_summary_output'
+  ).setFormat('SUMMARY');
 
-  // Step 9: For non-premium, check purchase count
-  const checkPurchaseCount = Split
-    .create('check_purchase_count')
-    .case((data: any) => Compare
-      .is(data.variables.totalPurchases)
-      .greaterThan(10)
-    );
+  const formatMinimalOutput = FormatOutputWidget.create(
+    'format_minimal_output'
+  ).setFormat('MINIMAL');
 
-  // Active users get summary
-  const formatSummaryOutput = new FormatOutputWidget('format_summary_output', 'SUMMARY');
-
-  // New users get minimal format
-  const formatMinimalOutput = new FormatOutputWidget('format_minimal_output', 'MINIMAL');
-
-  // Build the workflow chain
   extractBasicInfo.moveTo(extractContactInfo);
   extractContactInfo.moveTo(extractAddressInfo);
   extractAddressInfo.moveTo(extractMetadata);
@@ -192,21 +180,17 @@ const buildDataTransformationWorkflow = () => {
   enrichData.moveTo(normalizeData);
   normalizeData.moveTo(checkPremiumStatus);
 
-  checkPremiumStatus
-    .moveTo(formatPremiumOutput)
-    .elseMoveTo(checkPurchaseCount);
+  checkPremiumStatus.moveTo(formatPremiumOutput).elseMoveTo(checkPurchaseCount);
 
   checkPurchaseCount
     .moveTo(formatSummaryOutput)
     .elseMoveTo(formatMinimalOutput);
 
-  // Create and return the flow
   return Flow.create('data_transformation_workflow')
     .start(extractBasicInfo)
     .end();
 };
 
-// Example: Premium user data
 const runPremiumUserExample = async () => {
   console.log('=== Premium User Transformation ===\n');
 
@@ -249,7 +233,6 @@ const runPremiumUserExample = async () => {
   console.log(JSON.stringify(result.variables, null, 2));
 };
 
-// Example: Active non-premium user
 const runActiveUserExample = async () => {
   console.log('\n=== Active Non-Premium User Transformation ===\n');
 
@@ -290,7 +273,6 @@ const runActiveUserExample = async () => {
   console.log(JSON.stringify(result.payload.output, null, 2));
 };
 
-// Example: New user with minimal data
 const runNewUserExample = async () => {
   console.log('\n=== New User Transformation ===\n');
 
@@ -331,16 +313,19 @@ const runNewUserExample = async () => {
   console.log(JSON.stringify(result.payload.output, null, 2));
 };
 
-// Run all examples
 const runAllExamples = async () => {
   await runPremiumUserExample();
   await runActiveUserExample();
   await runNewUserExample();
 };
 
-// Run if executed directly
 if (require.main === module) {
   runAllExamples().catch(console.error);
 }
 
-export { buildDataTransformationWorkflow, runPremiumUserExample, runActiveUserExample, runNewUserExample };
+export {
+  buildDataTransformationWorkflow,
+  runPremiumUserExample,
+  runActiveUserExample,
+  runNewUserExample,
+};

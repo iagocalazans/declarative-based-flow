@@ -50,12 +50,12 @@ This dual-path system enables automatic error handling and conditional branching
 ### Widget Execution Flow
 
 1. **Entry Point:** `Flow.create(name).start(widget).end()` returns an executable function
-2. **Payload Wrapping:** Input data is automatically wrapped as `{ payload: originalData, variables: {} }`
-3. **Tree Traversal:** Widgets execute depth-first through the `left` path
-4. **Error Handling:** Exceptions automatically route to the `right` path (else branch)
-5. **Immutability:** Original payload is frozen; widgets add new properties or use `variables` object
+2. **Payload Wrapping:** Input data is automatically wrapped as `{ payload: originalData }`
+3. **Lifecycle Hook:** Widgets implement `protected async run(ctx)`; the base `process()` runs it, then advances into `left`, awaiting the whole chain. Legacy widgets that override `process()` and call `await super.process()` still work.
+4. **Error Handling:** A thrown value routes to the widget's `right` path. When no failure path exists, real errors propagate (no silent swallow) while a `RouteSignal` (control flow) completes quietly.
+5. **Immutability:** `variables` entries are read-only; widgets add new payload properties or use the `variables` object
 
-### Five Core Widgets
+### Core Widgets
 
 #### 1. Flow ([src/flow.class.ts](src/flow.class.ts))
 - Entry point and workflow executor
@@ -80,9 +80,36 @@ This dual-path system enables automatic error handling and conditional branching
 
 #### 5. CustomWidget ([src/custom-widget.ts](src/custom-widget.ts))
 - Base class for extending with custom business logic
-- Implement `async process(data: any): Promise<void>` method
-- Use `super.register(message, level)` for logging ('info', 'warn', 'error')
-- Must call `super.process(a)` at the end of custom process method
+- Override `protected async run(data: any): Promise<void>` with the operation (the base advances the chain)
+- Throw to route to the `.elseMoveTo()` failure path
+- Use `this.register(message, level)` for logging ('info', 'warn', 'error')
+- A subclass that adds config methods should re-declare `static create(name)` so the returned type exposes them
+- Legacy contract (override `process()` + call `await super.process()`) still works
+
+#### 6. Parallel ([src/parallel.ts](src/parallel.ts))
+- Fan-out/fan-in: runs named branches concurrently on isolated context clones, then merges
+- `concurrency(n)` caps in-flight branches; `onError('fail-fast' | 'settle')`; `into(path)` or custom `merge(fn)`
+- Usage: `Parallel.create('x').branch('a', wA).branch('b', wB).into('payload.sources')`
+
+#### 7. ParallelMap ([src/parallel-map.ts](src/parallel-map.ts))
+- Concurrency-limited batch map over an array (the ETL batch workhorse)
+- `from('{{ payload.items }}')`, `withConcurrency(n)`, `each(widgetOrFn)`, `into(path)`, `collectErrorsInto(path)`
+- `onItemError('collect' | 'fail-fast')`; `collect` gathers `{ index, item, error }` for partial-failure ETL
+
+#### 8. Retry ([src/retry.ts](src/retry.ts))
+- Decorator that re-runs `wrap(branch)` on retryable failures with fixed/exponential backoff
+- Never retries a `RouteSignal`; exhausted attempts route to `.elseMoveTo()`
+- `attempts(n)`, `backoff(strategy, options)`, `retryIf(fn)`, `isolate()`
+
+#### 9. CircuitBreaker ([src/circuit-breaker.ts](src/circuit-breaker.ts))
+- Decorator with closed/open/half-open state held on the instance (shared across flow runs)
+- Opens after `threshold` consecutive failures; fast-fails to `.elseMoveTo()` until `cooldown` elapses
+- Throws `CircuitOpenError` while open; compose as `CircuitBreaker.wrap(Retry.wrap(op))`
+
+#### Internals
+- `RouteSignal` ([src/route-signal.ts](src/route-signal.ts)): typed control-flow marker (not an `Error`) that distinguishes branch routing from real failures
+- `runWithConcurrency` ([src/concurrency.ts](src/concurrency.ts)): dependency-free ordered async pool used by both parallel widgets
+- `computeBackoff` ([src/backoff.ts](src/backoff.ts)): fixed/exponential backoff with optional jitter
 
 ### Template Expression System
 
